@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>마카오 미식 가이드 — MACAU GOURMET</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ivory:#F8F3E7;
+  --ivory-deep:#F1EAD8;
+  --azulejo:#17395C;
+  --azulejo-soft:#2C5580;
+  --azulejo-pale:#DCE6EE;
+  --vermillion:#C4502B;
+  --mustard:#D9A441;
+  --ink:#1C2530;
+  --ink-soft:#5A6472;
+  --card:#FFFDF7;
+  --line:rgba(23,57,92,.16);
+  --shadow:0 2px 6px rgba(23,57,92,.06), 0 14px 34px rgba(23,57,92,.09);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:'IBM Plex Sans KR',sans-serif;
+  background:var(--ivory);
+  color:var(--ink);
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+/* ── azulejo tile texture backdrop ───────────────── */
+body::before{
+  content:"";
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96'%3E%3Cg fill='none' stroke='%2317395C' stroke-opacity='0.05' stroke-width='1.4'%3E%3Cpath d='M48 6 L90 48 L48 90 L6 48 Z'/%3E%3Ccircle cx='48' cy='48' r='14'/%3E%3Cpath d='M48 34 q6 8 0 14 q-6 -8 0 -14 M48 62 q6 -8 0 -14 M34 48 q8 6 14 0 M62 48 q-8 -6 -14 0'/%3E%3Ccircle cx='0' cy='0' r='9'/%3E%3Ccircle cx='96' cy='0' r='9'/%3E%3Ccircle cx='0' cy='96' r='9'/%3E%3Ccircle cx='96' cy='96' r='9'/%3E%3C/g%3E%3C/svg%3E");
+}
+main,header,footer{position:relative;z-index:1}
+
+/* ── header ──────────────────────────────────────── */
+header{
+  background:var(--azulejo);
+  color:var(--ivory);
+  overflow:hidden;
+  position:relative;
+}
+header::before{
+  content:"";
+  position:absolute;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg fill='none' stroke='%23F8F3E7' stroke-opacity='0.10' stroke-width='1.6'%3E%3Cpath d='M60 8 L112 60 L60 112 L8 60 Z'/%3E%3Ccircle cx='60' cy='60' r='19'/%3E%3Cpath d='M60 41 q9 10 0 19 q-9 -10 0 -19 M60 79 q9 -10 0 -19 M41 60 q10 9 19 0 M79 60 q-10 -9 -19 0'/%3E%3Ccircle cx='0' cy='0' r='12'/%3E%3Ccircle cx='120' cy='0' r='12'/%3E%3Ccircle cx='0' cy='120' r='12'/%3E%3Ccircle cx='120' cy='120' r='12'/%3E%3C/g%3E%3C/svg%3E");
+}
+.hero{
+  max-width:1180px;margin:0 auto;
+  padding:64px 28px 56px;
+  position:relative;
+}
+.hero-kicker{
+  display:inline-flex;align-items:center;gap:10px;
+  font-size:12px;font-weight:600;letter-spacing:.32em;
+  text-transform:uppercase;color:var(--mustard);
+  animation:rise .7s ease both;
+}
+.hero-kicker::before,.hero-kicker::after{
+  content:"";width:34px;height:1px;background:var(--mustard);opacity:.7;
+}
+h1{
+  font-family:'Gowun Batang',serif;
+  font-size:clamp(40px,6.5vw,74px);
+  font-weight:700;line-height:1.12;
+  margin:18px 0 14px;
+  animation:rise .7s .08s ease both;
+}
+h1 em{font-style:normal;color:var(--mustard)}
+.hero-sub{
+  font-size:15.5px;font-weight:300;color:rgba(248,243,231,.82);
+  max-width:640px;
+  animation:rise .7s .16s ease both;
+}
+.hero-badges{
+  display:flex;flex-wrap:wrap;gap:10px;margin-top:26px;
+  animation:rise .7s .24s ease both;
+}
+.hero-badge{
+  font-size:12.5px;font-weight:500;
+  border:1px solid rgba(248,243,231,.35);
+  border-radius:999px;padding:6px 14px;
+  color:rgba(248,243,231,.9);
+  backdrop-filter:blur(2px);
+}
+.hero-badge b{color:var(--mustard);font-weight:700}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
+/* ── filter bar ──────────────────────────────────── */
+.filters{
+  position:sticky;top:0;z-index:50;
+  background:rgba(248,243,231,.92);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);
+  box-shadow:0 6px 22px rgba(23,57,92,.05);
+}
+.filters-inner{
+  max-width:1180px;margin:0 auto;
+  padding:16px 28px 14px;
+  display:flex;flex-direction:column;gap:12px;
+}
+.filters-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.search-wrap{
+  flex:1 1 260px;position:relative;min-width:220px;
+}
+.search-wrap svg{
+  position:absolute;left:14px;top:50%;transform:translateY(-50%);
+  width:16px;height:16px;stroke:var(--ink-soft);
+}
+#search{
+  width:100%;padding:11px 16px 11px 40px;
+  font-family:inherit;font-size:14px;
+  border:1.5px solid var(--line);border-radius:999px;
+  background:var(--card);color:var(--ink);
+  outline:none;transition:border-color .2s, box-shadow .2s;
+}
+#search:focus{border-color:var(--azulejo);box-shadow:0 0 0 3px rgba(23,57,92,.12)}
+#search::placeholder{color:#9AA3AE}
+select{
+  font-family:inherit;font-size:13.5px;font-weight:500;
+  padding:10px 34px 10px 14px;
+  border:1.5px solid var(--line);border-radius:999px;
+  background:var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2317395C' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 14px center;
+  color:var(--ink);appearance:none;cursor:pointer;
+  transition:border-color .2s;
+}
+select:focus{outline:none;border-color:var(--azulejo)}
+.chip-group{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip-label{
+  font-size:11px;font-weight:700;letter-spacing:.14em;
+  color:var(--ink-soft);text-transform:uppercase;
+  margin-right:2px;
+}
+.chip{
+  font-family:inherit;font-size:13px;font-weight:500;
+  padding:7px 15px;border-radius:999px;cursor:pointer;
+  border:1.5px solid var(--line);
+  background:var(--card);color:var(--ink);
+  transition:all .18s ease;
+  user-select:none;
+}
+.chip:hover{border-color:var(--azulejo);transform:translateY(-1px)}
+.chip.active{
+  background:var(--azulejo);border-color:var(--azulejo);color:var(--ivory);
+  box-shadow:0 4px 12px rgba(23,57,92,.28);
+}
+.chip.active.loc{background:var(--vermillion);border-color:var(--vermillion);box-shadow:0 4px 12px rgba(196,80,43,.3)}
+.count-line{
+  font-size:13px;color:var(--ink-soft);
+}
+.count-line b{color:var(--vermillion);font-weight:700;font-size:15px}
+.reset-btn{
+  font-family:inherit;font-size:12.5px;font-weight:600;
+  color:var(--vermillion);background:none;border:none;cursor:pointer;
+  text-decoration:underline;text-underline-offset:3px;
+  margin-left:auto;
+}
+.right-tools{margin-left:auto;display:flex;align-items:center;gap:16px}
+.right-tools .reset-btn{margin-left:0}
+.classic-toggle{
+  display:inline-flex;align-items:center;gap:7px;
+  font-size:12.5px;font-weight:600;color:var(--ink-soft);cursor:pointer;
+  user-select:none;white-space:nowrap;
+}
+.classic-toggle input{accent-color:var(--mustard);width:15px;height:15px;cursor:pointer}
+
+/* ── grid & cards ────────────────────────────────── */
+main{max-width:1180px;margin:0 auto;padding:34px 28px 60px}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(330px,1fr));
+  gap:22px;
+}
+.card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:24px 24px 20px;
+  display:flex;flex-direction:column;gap:0;
+  box-shadow:var(--shadow);
+  position:relative;overflow:hidden;
+  transition:transform .22s ease, box-shadow .22s ease;
+  animation:cardIn .45s ease both;
+}
+@keyframes cardIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.card:hover{transform:translateY(-5px);box-shadow:0 6px 14px rgba(23,57,92,.1),0 24px 48px rgba(23,57,92,.16)}
+.card::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:4px;
+  background:var(--cat-color,var(--azulejo));
+}
+.card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.badge-group{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.cat-badge{
+  font-size:11px;font-weight:700;letter-spacing:.08em;
+  color:#fff;background:var(--cat-color,var(--azulejo));
+  padding:4px 11px;border-radius:999px;
+  white-space:nowrap;
+}
+.classic-badge{
+  font-size:11px;font-weight:800;letter-spacing:.01em;
+  color:#5E4310;background:linear-gradient(135deg,#F4D689,#E0AB45);
+  padding:4px 10px;border-radius:999px;white-space:nowrap;
+  box-shadow:0 1px 3px rgba(217,164,65,.45);
+}
+.michelin-badge{
+  font-size:11px;font-weight:800;letter-spacing:.01em;
+  color:#fff;background:linear-gradient(135deg,#C0392B,#7B1E1E);
+  padding:4px 10px;border-radius:999px;white-space:nowrap;
+  box-shadow:0 1px 3px rgba(123,30,30,.4);
+}
+.loc-badge{
+  font-size:11.5px;font-weight:600;color:var(--azulejo);
+  border:1px solid var(--line);border-radius:999px;
+  padding:3px 10px;white-space:nowrap;
+  background:var(--azulejo-pale);
+}
+.card.is-classic{background:linear-gradient(180deg,#FFFBF0,#FFFDF7)}
+.card.is-classic::after{
+  content:"";position:absolute;inset:0;border-radius:18px;pointer-events:none;
+  border:1.5px solid rgba(217,164,65,.42);
+}
+.card h3{
+  font-family:'Gowun Batang',serif;
+  font-size:21px;font-weight:700;line-height:1.3;
+  margin:14px 0 2px;color:var(--ink);
+}
+.name-en{font-size:12.5px;color:var(--ink-soft);font-weight:400;letter-spacing:.02em}
+.rating-row{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  margin:12px 0 2px;
+}
+.stars{color:var(--mustard);font-size:15px;letter-spacing:2px}
+.rating-num{font-weight:700;font-size:15px;color:var(--ink)}
+.reviews{font-size:12.5px;color:var(--ink-soft)}
+.price-tag{
+  margin-left:auto;font-size:12.5px;font-weight:600;color:var(--vermillion);
+}
+.price-tag .sym{letter-spacing:1px;font-weight:800}
+.menu-line{
+  margin-top:12px;padding:11px 14px;
+  background:var(--ivory-deep);
+  border-radius:11px;
+  font-size:13px;color:var(--ink);
+}
+.menu-line b{font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--vermillion);display:block;margin-bottom:2px}
+.pros-line{
+  margin-top:11px;font-size:13.5px;font-weight:600;color:var(--azulejo);
+  display:flex;gap:7px;align-items:baseline;
+}
+.pros-line::before{content:"✓";color:var(--vermillion);font-weight:800}
+.intro-line{
+  margin-top:5px;font-size:13px;color:var(--ink-soft);font-weight:300;
+  flex:1;
+}
+.card-foot{
+  margin-top:16px;padding-top:13px;
+  border-top:1px dashed var(--line);
+  display:flex;justify-content:space-between;align-items:center;gap:8px;
+}
+.addr{font-size:12px;color:var(--ink-soft);display:flex;align-items:center;gap:5px}
+.addr svg{width:12px;height:12px;stroke:var(--vermillion);flex-shrink:0}
+.map-link{
+  font-size:12.5px;font-weight:700;color:var(--azulejo);
+  text-decoration:none;white-space:nowrap;
+  display:inline-flex;align-items:center;gap:5px;
+  transition:color .15s;
+}
+.map-link:hover{color:var(--vermillion)}
+.map-link svg{width:13px;height:13px;stroke:currentColor}
+
+.empty{
+  grid-column:1/-1;text-align:center;padding:70px 20px;
+  color:var(--ink-soft);
+}
+.empty .big{font-family:'Gowun Batang',serif;font-size:26px;color:var(--azulejo);margin-bottom:8px}
+
+/* ── footer ──────────────────────────────────────── */
+footer{
+  border-top:1px solid var(--line);
+  background:var(--ivory-deep);
+  padding:26px 28px 34px;text-align:center;
+  font-size:12.5px;color:var(--ink-soft);
+}
+footer .foot-title{font-family:'Gowun Batang',serif;font-size:15px;color:var(--azulejo);font-weight:700;margin-bottom:6px}
+
+@media(max-width:640px){
+  .hero{padding:44px 20px 40px}
+  .filters-inner{padding:12px 16px}
+  main{padding:24px 16px 48px}
+  .grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hero">
+    <span class="hero-kicker">Macau Gourmet Guide</span>
+    <h1>마카오 미식 가이드<br><em>맛집 컬렉션</em></h1>
+    <p class="hero-sub">구글 평점과 리뷰를 기준으로 마카오 전역의 맛집을 모았습니다.
+    카테고리, 지역, 가격대로 골라보세요.</p>
+    <div class="hero-badges">
+      <span class="hero-badge">⭐ 구글 평점 <b>4.0+</b></span>
+      <span class="hero-badge">🍽️ 엄선 <b>__COUNT__곳</b></span>
+      <span class="hero-badge">💬 리뷰 <b>100개 이상</b></span>
+      <span class="hero-badge">📍 마카오반도 · 타이파 · 코타이 · 콜로안</span>
+    </div>
+  </div>
+</header>
+
+<div class="filters">
+  <div class="filters-inner">
+    <div class="filters-row">
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="search" type="text" placeholder="식당 이름 · 메뉴로 검색 (예: 에그타르트, 딤섬)">
+      </div>
+      <select id="price-filter">
+        <option value="">가격대 전체</option>
+        <option value="$">$ (저렴)</option>
+        <option value="$$">$$ (보통)</option>
+        <option value="$$$">$$$ (고급)</option>
+        <option value="$$$$">$$$$ (파인다이닝)</option>
+      </select>
+      <select id="sort">
+        <option value="rating">별점 높은순</option>
+        <option value="reviews">리뷰 많은순</option>
+        <option value="name">이름순</option>
+      </select>
+    </div>
+    <div class="filters-row chip-group" id="cat-chips">
+      <span class="chip-label">종류</span>
+      <button class="chip active" data-cat="">전체</button>
+    </div>
+    <div class="filters-row chip-group" id="loc-chips">
+      <span class="chip-label">지역</span>
+      <button class="chip loc active" data-loc="">전체</button>
+    </div>
+    <div class="filters-row">
+      <span class="count-line"><b id="count">0</b>곳의 맛집</span>
+      <div class="right-tools">
+        <button class="reset-btn" id="reset">필터 초기화</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<main>
+  <div class="grid" id="grid"></div>
+</main>
+
+<footer>
+  <div class="foot-title">마카오 미식 가이드</div>
+  <p>구글 평점 4.0 이상 · 리뷰 100개 이상의 마카오 식당을 모았습니다. ⭐ 미쉐린 표시는 미쉐린 가이드 등재 식당입니다.<br>
+  가격은 2인 기준 원화 환산 근사치이며, 별점·리뷰 수는 조사 시점(2026년 7월) 구글 지도 기준입니다. 방문 전 최신 정보 확인을 권장합니다.</p>
+</footer>
+
+<script>
+/* ══════════════ DATA ══════════════ */
+const DATA = /*__DATA__*/[];
+
+/* ══════════════ CATEGORY COLORS ══════════════ */
+const CAT_COLORS = {
+  "포르투갈":"#C4502B",
+  "매캐니즈":"#B0552F",
+  "광동":"#8A2F2F",
+  "중식":"#A23B36",
+  "딤섬":"#B5473E",
+  "해산물":"#1F6F78",
+  "일식":"#B03A5B",
+  "스시":"#C24E6B",
+  "라멘":"#8E5A9E",
+  "한식":"#C0392B",
+  "태국":"#2E7D6B",
+  "인도":"#C97A1A",
+  "인도네시아":"#A56A25",
+  "이탈리안":"#3A7D44",
+  "프렌치":"#5B4B8A",
+  "양식":"#946B2D",
+  "베이커리":"#C98A2D",
+  "카페/디저트":"#C98A2D",
+  "로컬 간식":"#D9772F",
+  "패스트푸드":"#D97706",
+  "테이크아웃":"#B8791F",
+  "채식":"#4E8B4A",
+  "바비큐":"#7A3B22",
+  "뷔페":"#3E6D9E",
+  "바":"#734F9E",
+  "와인바":"#7B2D52",
+  "펍":"#5E4B8A",
+  "일반 레스토랑":"#556072",
+  "기타":"#6B7280"
+};
+const catColor = c => CAT_COLORS[c] || "#17395C";
+
+/* ══════════════ STATE ══════════════ */
+let state = { q:"", cat:"", loc:"", price:"", sort:"rating", showClassic:true };
+
+/* ══════════════ BUILD CHIPS ══════════════ */
+function buildChips(){
+  const cats = [...new Set(DATA.map(d=>d.category))];
+  const catWrap = document.getElementById("cat-chips");
+  cats.forEach(c=>{
+    const b = document.createElement("button");
+    b.className = "chip"; b.dataset.cat = c; b.textContent = c;
+    catWrap.appendChild(b);
+  });
+  const locOrder = ["마카오반도","타이파","코타이","콜로안"];
+  const locs = locOrder.filter(l=>DATA.some(d=>d.location===l));
+  const locWrap = document.getElementById("loc-chips");
+  locs.forEach(l=>{
+    const b = document.createElement("button");
+    b.className = "chip loc"; b.dataset.loc = l; b.textContent = l;
+    locWrap.appendChild(b);
+  });
+}
+
+/* ══════════════ RENDER ══════════════ */
+function starStr(r){
+  const full = Math.floor(r);
+  const half = r - full >= 0.4;
+  return "★".repeat(full) + (half ? "☆" : "");
+}
+function fmtReviews(n){
+  return n >= 1000 ? (n/1000).toFixed(n%1000===0?0:1) + "k" : String(n);
+}
+/* 가격은 DB(macau.db)에서 이미 2인 기준 원화 문자열로 계산되어 들어온다(예: "55,000~73,300원"). */
+function render(){
+  const grid = document.getElementById("grid");
+  let rows = DATA.filter(d=>{
+    if(!state.showClassic && d.classic && d.rating < 4.5) return false;
+    if(state.cat && d.category !== state.cat) return false;
+    if(state.loc && d.location !== state.loc) return false;
+    if(state.price && d.priceSym !== state.price) return false;
+    if(state.q){
+      const hay = (d.name_ko + d.name_en + d.menu.join(" ") + d.category + d.intro + d.pros).toLowerCase();
+      if(!hay.includes(state.q.toLowerCase())) return false;
+    }
+    return true;
+  });
+  rows.sort((a,b)=>{
+    if(state.sort==="rating") return b.rating - a.rating || b.reviews - a.reviews;
+    if(state.sort==="reviews") return b.reviews - a.reviews;
+    return a.name_ko.localeCompare(b.name_ko,"ko");
+  });
+  document.getElementById("count").textContent = rows.length;
+
+  if(!rows.length){
+    grid.innerHTML = `<div class="empty"><div class="big">검색 결과가 없어요</div>조건을 바꾸거나 필터를 초기화해 보세요.</div>`;
+    return;
+  }
+  grid.innerHTML = rows.map((d,i)=>`
+    <article class="card" style="--cat-color:${catColor(d.category)};animation-delay:${Math.min(i*40,400)}ms">
+      <div class="card-top">
+        <div class="badge-group">
+          <span class="cat-badge">${d.category}</span>
+          ${d.michelin ? `<span class="michelin-badge">⭐ 미쉐린 ${d.michelin}</span>` : ''}
+        </div>
+        <span class="loc-badge">📍 ${d.location}</span>
+      </div>
+      <h3>${d.name_ko}</h3>
+      <div class="name-en">${d.name_en}</div>
+      <div class="rating-row">
+        <span class="stars">${starStr(d.rating)}</span>
+        <span class="rating-num">${d.rating.toFixed(1)}</span>
+        <span class="reviews">리뷰 ${fmtReviews(d.reviews)}+</span>
+        <span class="price-tag"><span class="sym">${d.priceSym||''}</span> ${d.price||''}</span>
+      </div>
+      <div class="menu-line"><b>대표 메뉴</b>${d.menu.join(" · ")}</div>
+      <div class="pros-line">${d.pros}</div>
+      <p class="intro-line">${d.intro}</p>
+      <div class="card-foot">
+        <span class="addr"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-5.5-7-11a7 7 0 0 1 14 0c0 5.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>${d.address_hint}</span>
+        <a class="map-link" target="_blank" rel="noopener"
+           href="${d.map ? d.map : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(d.name_en + " Macau")}`}">
+          지도 보기
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg>
+        </a>
+      </div>
+    </article>
+  `).join("");
+}
+
+/* ══════════════ EVENTS ══════════════ */
+document.getElementById("search").addEventListener("input", e=>{ state.q = e.target.value.trim(); render(); });
+document.getElementById("price-filter").addEventListener("change", e=>{ state.price = e.target.value; render(); });
+document.getElementById("sort").addEventListener("change", e=>{ state.sort = e.target.value; render(); });
+document.getElementById("cat-chips").addEventListener("click", e=>{
+  const b = e.target.closest(".chip"); if(!b) return;
+  document.querySelectorAll("#cat-chips .chip").forEach(c=>c.classList.remove("active"));
+  b.classList.add("active"); state.cat = b.dataset.cat; render();
+});
+document.getElementById("loc-chips").addEventListener("click", e=>{
+  const b = e.target.closest(".chip"); if(!b) return;
+  document.querySelectorAll("#loc-chips .chip").forEach(c=>c.classList.remove("active"));
+  b.classList.add("active"); state.loc = b.dataset.loc; render();
+});
+document.getElementById("reset").addEventListener("click", ()=>{
+  state = { q:"", cat:"", loc:"", price:"", sort:"rating", showClassic:true };
+  document.getElementById("search").value = "";
+  document.getElementById("price-filter").value = "";
+  document.getElementById("sort").value = "rating";
+  document.querySelectorAll(".chip").forEach(c=>c.classList.toggle("active", c.dataset.cat==="" || c.dataset.loc===""));
+  render();
+});
+
+buildChips();
+render();
+</script>
+</body>
+</html>
