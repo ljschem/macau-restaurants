@@ -345,16 +345,20 @@ main{max-width:1180px;margin:0 auto;padding:34px 28px 60px}
 }
 .empty .big{font-family:'Gowun Batang',serif;font-size:26px;color:var(--azulejo);margin-bottom:8px}
 
-/* ── 즐겨찾기 하트 (카드·패널 공통) ──────────────── */
+/* ── 즐겨찾기 북마크(책갈피) 버튼 (카드·패널 공통) ── */
 .top-right{display:flex;align-items:center;gap:8px}
 .fav-btn{
-  border:none;background:none;cursor:pointer;
-  font-size:21px;line-height:1;padding:0;
+  border:none;background:none;cursor:pointer;padding:2px;line-height:0;
   color:var(--ink-soft);opacity:.7;
   transition:transform .15s ease, color .15s, opacity .15s;
 }
-.fav-btn:hover{transform:scale(1.18);opacity:1;color:var(--vermillion)}
+.fav-btn svg{
+  width:18px;height:21px;display:block;
+  fill:none;stroke:currentColor;stroke-width:1.8;stroke-linejoin:round;
+}
+.fav-btn:hover{transform:scale(1.12);opacity:1;color:var(--vermillion)}
 .fav-btn.on{color:var(--vermillion);opacity:1}
+.fav-btn.on svg{fill:currentColor}   /* 즐겨찾기: 채워진 북마크 */
 .filter-toggle.fav input{accent-color:var(--vermillion)}
 
 /* ── 뷰 전환 탭 (목록 / 지도) ─────────────────────── */
@@ -505,7 +509,7 @@ footer .foot-title{font-family:'Gowun Batang',serif;font-size:15px;color:var(--a
     <div class="filters-row">
       <span class="count-line"><b id="count">0</b>곳의 맛집</span>
       <div class="right-tools">
-        <label class="filter-toggle fav"><input type="checkbox" id="fav-only"> ♥ 즐겨찾기만</label>
+        <label class="filter-toggle fav"><input type="checkbox" id="fav-only"> 🔖 즐겨찾기만</label>
         <label class="filter-toggle classic"><input type="checkbox" id="classic-only"> 🏛️ 노포·명소만</label>
         <label class="filter-toggle michelin"><input type="checkbox" id="michelin-only"> ⭐ 미슐랭만</label>
         <label class="filter-toggle breakfast"><input type="checkbox" id="breakfast-only"> 🌅 아침가능만</label>
@@ -581,11 +585,9 @@ function toggleFav(key){
   favs.has(key) ? favs.delete(key) : favs.add(key);
   try{ localStorage.setItem(FAV_KEY, JSON.stringify([...favs])); }catch(e){}
 }
-function refreshFavUI(){                       // 화면에 있는 모든 하트 버튼 상태 동기화
+function refreshFavUI(){                       // 화면에 있는 모든 북마크 버튼 상태 동기화(SVG 유지)
   document.querySelectorAll(".fav-btn").forEach(b=>{
-    const on = favs.has(b.dataset.key);
-    b.classList.toggle("on", on);
-    b.textContent = on ? "♥" : "♡";
+    b.classList.toggle("on", favs.has(b.dataset.key));
   });
 }
 
@@ -680,7 +682,7 @@ function cardBody(d){
         </div>
         <div class="top-right">
           <span class="loc-badge">📍 ${d.location}</span>
-          <button class="fav-btn ${isFav(d)?'on':''}" data-key="${favKey(d)}" type="button" aria-label="즐겨찾기" title="즐겨찾기">${isFav(d)?'♥':'♡'}</button>
+          <button class="fav-btn ${isFav(d)?'on':''}" data-key="${favKey(d)}" type="button" aria-label="즐겨찾기" title="즐겨찾기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button>
         </div>
       </div>
       <h3>${d.name_ko}</h3>
