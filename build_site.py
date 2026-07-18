@@ -35,6 +35,22 @@ from macau_crawler.fx import FxConverter          # noqa: E402
 # Matches macau_crawler.config.Config defaults; FX comes from the DB cache, this is fallback only.
 _FX_FALLBACK = {"MOP": 168.0, "HKD": 173.0, "USD": 1350.0, "CNY": 188.0}
 
+# 전설의 노포·명소 큐레이션: 원본 51곳 버전(backup/index.curated-51.html)에서 classic:true였던
+# 식당 중 현재 macau.db 296곳(v_filtered)에 남아있는 곳들의 place_id. 이 목록에 있으면
+# 카드에 '🏛️ 노포·명소' 뱃지가 붙고 '노포·명소만' 필터에 잡힌다. (평점 4.0 미만이라 필터에서
+# 탈락한 마가렛/이순우유/웡쿤/청키/룽화 등은 데이터셋에 없어 여기 포함되지 않음.)
+_CLASSIC_PLACE_IDS = {
+    "ChIJJ4CiAilwATQROgq5tY482gQ",  # Fernando's Restaurant (페르난도)
+    "ChIJjbXYf_N6ATQR4F98x6qYRi4",  # A Lorcha (아 로르차)
+    "ChIJ-1VlPAlwATQR8iX7BtKKOlQ",  # António Macau (안토니오)
+    "ChIJ9e7dPQlwATQR6mDaCQb-PVc",  # O Santos (오 산토스)
+    "ChIJMbwajvN6ATQRYbyfZbCjaeA",  # Restaurante Litoral (리토랄)
+    "ChIJd3rPI956ATQR_cVchxtoXRY",  # Riquexó (리케쇼)
+    "ChIJY7O2rzVwATQRa7kmgXT43Kg",  # Cafe Nga Tim (응아팀)
+    "ChIJOXVCtuR6ATQRsBu79Nq3-CM",  # Wong Chi Kei (웡치케이)
+    "ChIJuzGRz-R6ATQRIj3ITfeD6NE",  # Nam Ping Cafe (남핑 카페)
+}
+
 
 def _menu_list(raw: str) -> list[str]:
     """대표메뉴 is a ' · '-joined string in the export; split back to an array for the card."""
@@ -93,6 +109,7 @@ def _to_card(r: dict) -> dict:
         "intro": (r.get("소개") or "").strip(),
         "michelin": _michelin_short(r.get("미쉐린") or ""),   # 폴리시2: 별도 미쉐린 뱃지
         "map": (r.get("지도") or "").strip(),                  # 폴리시3: 실제 지도 링크
+        "classic": (r.get("place_id") or "") in _CLASSIC_PLACE_IDS,  # 🏛️ 노포·명소 큐레이션
     }
 
 
@@ -123,9 +140,13 @@ def main() -> None:
     with_michelin = sum(1 for c in cards if c["michelin"])
     with_price = sum(1 for c in cards if c["price"])
     with_lunch = sum(1 for c in cards if c["price_lunch"])
+    with_classic = sum(1 for c in cards if c["classic"])
     print(f"Wrote {OUTPUT} - {len(cards)} restaurants "
-          f"({with_michelin} michelin, {with_price} with dinner price, "
-          f"{with_lunch} with lunch price).")
+          f"({with_michelin} michelin, {with_classic} classic, "
+          f"{with_price} with dinner price, {with_lunch} with lunch price).")
+    if with_classic != len(_CLASSIC_PLACE_IDS):
+        print(f"  WARNING: {len(_CLASSIC_PLACE_IDS)} classic place_ids configured "
+              f"but only {with_classic} matched in the dataset.")
 
 
 if __name__ == "__main__":

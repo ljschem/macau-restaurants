@@ -161,14 +161,17 @@ select:focus{outline:none;border-color:var(--azulejo)}
   text-decoration:underline;text-underline-offset:3px;
   margin-left:auto;
 }
-.right-tools{margin-left:auto;display:flex;align-items:center;gap:16px}
+.right-tools{margin-left:auto;display:flex;align-items:center;flex-wrap:wrap;gap:14px}
 .right-tools .reset-btn{margin-left:0}
-.classic-toggle{
+.filter-toggle{
   display:inline-flex;align-items:center;gap:7px;
   font-size:12.5px;font-weight:600;color:var(--ink-soft);cursor:pointer;
-  user-select:none;white-space:nowrap;
+  user-select:none;white-space:nowrap;transition:color .15s;
 }
-.classic-toggle input{accent-color:var(--mustard);width:15px;height:15px;cursor:pointer}
+.filter-toggle input{width:15px;height:15px;cursor:pointer}
+.filter-toggle.classic input{accent-color:var(--mustard)}
+.filter-toggle.michelin input{accent-color:var(--vermillion)}
+.filter-toggle:has(input:checked){color:var(--azulejo);font-weight:700}
 
 /* ── grid & cards ────────────────────────────────── */
 main{max-width:1180px;margin:0 auto;padding:34px 28px 60px}
@@ -363,6 +366,8 @@ footer .foot-title{font-family:'Gowun Batang',serif;font-size:15px;color:var(--a
     <div class="filters-row">
       <span class="count-line"><b id="count">0</b>곳의 맛집</span>
       <div class="right-tools">
+        <label class="filter-toggle classic"><input type="checkbox" id="classic-only"> 🏛️ 노포·명소만</label>
+        <label class="filter-toggle michelin"><input type="checkbox" id="michelin-only"> ⭐ 미슐랭만</label>
         <button class="reset-btn" id="reset">필터 초기화</button>
       </div>
     </div>
@@ -418,7 +423,7 @@ const CAT_COLORS = {
 const catColor = c => CAT_COLORS[c] || "#17395C";
 
 /* ══════════════ STATE ══════════════ */
-let state = { q:"", cat:"", loc:"", price:"", sort:"rating", showClassic:true };
+let state = { q:"", cat:"", loc:"", price:"", sort:"rating", onlyClassic:false, onlyMichelin:false };
 
 /* ══════════════ BUILD CHIPS ══════════════ */
 function buildChips(){
@@ -471,7 +476,8 @@ function priceBlock(d){
 function render(){
   const grid = document.getElementById("grid");
   let rows = DATA.filter(d=>{
-    if(!state.showClassic && d.classic && d.rating < 4.5) return false;
+    if(state.onlyClassic && !d.classic) return false;
+    if(state.onlyMichelin && !d.michelin) return false;
     if(state.cat && d.category !== state.cat) return false;
     if(state.loc && d.location !== state.loc) return false;
     if(state.price && d.priceSym !== state.price) return false;
@@ -493,10 +499,11 @@ function render(){
     return;
   }
   grid.innerHTML = rows.map((d,i)=>`
-    <article class="card" style="--cat-color:${catColor(d.category)};animation-delay:${Math.min(i*40,400)}ms">
+    <article class="card${d.classic ? ' is-classic' : ''}" style="--cat-color:${catColor(d.category)};animation-delay:${Math.min(i*40,400)}ms">
       <div class="card-top">
         <div class="badge-group">
           <span class="cat-badge">${d.category}</span>
+          ${d.classic ? `<span class="classic-badge">🏛️ 노포·명소</span>` : ''}
           ${d.michelin ? `<span class="michelin-badge">⭐ 미쉐린 ${d.michelin}</span>` : ''}
         </div>
         <span class="loc-badge">📍 ${d.location}</span>
@@ -529,6 +536,8 @@ function render(){
 document.getElementById("search").addEventListener("input", e=>{ state.q = e.target.value.trim(); render(); });
 document.getElementById("price-filter").addEventListener("change", e=>{ state.price = e.target.value; render(); });
 document.getElementById("sort").addEventListener("change", e=>{ state.sort = e.target.value; render(); });
+document.getElementById("classic-only").addEventListener("change", e=>{ state.onlyClassic = e.target.checked; render(); });
+document.getElementById("michelin-only").addEventListener("change", e=>{ state.onlyMichelin = e.target.checked; render(); });
 document.getElementById("cat-chips").addEventListener("click", e=>{
   const b = e.target.closest(".chip"); if(!b) return;
   document.querySelectorAll("#cat-chips .chip").forEach(c=>c.classList.remove("active"));
@@ -540,10 +549,12 @@ document.getElementById("loc-chips").addEventListener("click", e=>{
   b.classList.add("active"); state.loc = b.dataset.loc; render();
 });
 document.getElementById("reset").addEventListener("click", ()=>{
-  state = { q:"", cat:"", loc:"", price:"", sort:"rating", showClassic:true };
+  state = { q:"", cat:"", loc:"", price:"", sort:"rating", onlyClassic:false, onlyMichelin:false };
   document.getElementById("search").value = "";
   document.getElementById("price-filter").value = "";
   document.getElementById("sort").value = "rating";
+  document.getElementById("classic-only").checked = false;
+  document.getElementById("michelin-only").checked = false;
   document.querySelectorAll(".chip").forEach(c=>c.classList.toggle("active", c.dataset.cat==="" || c.dataset.loc===""));
   render();
 });
