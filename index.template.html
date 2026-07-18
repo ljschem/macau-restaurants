@@ -423,7 +423,7 @@ const CAT_COLORS = {
 const catColor = c => CAT_COLORS[c] || "#17395C";
 
 /* ══════════════ STATE ══════════════ */
-let state = { q:"", cat:"", loc:"", price:"", sort:"rating", onlyClassic:false, onlyMichelin:false };
+let state = { q:"", cats:[], loc:"", price:"", sort:"rating", onlyClassic:false, onlyMichelin:false };
 
 /* ══════════════ BUILD CHIPS ══════════════ */
 function buildChips(){
@@ -478,7 +478,7 @@ function render(){
   let rows = DATA.filter(d=>{
     if(state.onlyClassic && !d.classic) return false;
     if(state.onlyMichelin && !d.michelin) return false;
-    if(state.cat && d.category !== state.cat) return false;
+    if(state.cats.length && !state.cats.includes(d.category)) return false;
     if(state.loc && d.location !== state.loc) return false;
     if(state.price && d.priceSym !== state.price) return false;
     if(state.q){
@@ -540,8 +540,19 @@ document.getElementById("classic-only").addEventListener("change", e=>{ state.on
 document.getElementById("michelin-only").addEventListener("change", e=>{ state.onlyMichelin = e.target.checked; render(); });
 document.getElementById("cat-chips").addEventListener("click", e=>{
   const b = e.target.closest(".chip"); if(!b) return;
-  document.querySelectorAll("#cat-chips .chip").forEach(c=>c.classList.remove("active"));
-  b.classList.add("active"); state.cat = b.dataset.cat; render();
+  const cat = b.dataset.cat;
+  if(cat === ""){                     // '전체' → 종류 선택 전부 해제
+    state.cats = [];
+  } else {                             // 개별 종류 토글(중복 선택 가능)
+    const i = state.cats.indexOf(cat);
+    if(i >= 0) state.cats.splice(i, 1); else state.cats.push(cat);
+  }
+  // 활성 표시 갱신: 선택이 하나도 없으면 '전체'만 활성
+  document.querySelectorAll("#cat-chips .chip").forEach(c=>{
+    const cc = c.dataset.cat;
+    c.classList.toggle("active", cc === "" ? state.cats.length === 0 : state.cats.includes(cc));
+  });
+  render();
 });
 document.getElementById("loc-chips").addEventListener("click", e=>{
   const b = e.target.closest(".chip"); if(!b) return;
@@ -549,7 +560,7 @@ document.getElementById("loc-chips").addEventListener("click", e=>{
   b.classList.add("active"); state.loc = b.dataset.loc; render();
 });
 document.getElementById("reset").addEventListener("click", ()=>{
-  state = { q:"", cat:"", loc:"", price:"", sort:"rating", onlyClassic:false, onlyMichelin:false };
+  state = { q:"", cats:[], loc:"", price:"", sort:"rating", onlyClassic:false, onlyMichelin:false };
   document.getElementById("search").value = "";
   document.getElementById("price-filter").value = "";
   document.getElementById("sort").value = "rating";
