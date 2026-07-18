@@ -7,6 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
 <style>
 :root{
   --ivory:#F8F3E7;
@@ -342,6 +345,73 @@ main{max-width:1180px;margin:0 auto;padding:34px 28px 60px}
 }
 .empty .big{font-family:'Gowun Batang',serif;font-size:26px;color:var(--azulejo);margin-bottom:8px}
 
+/* ── 즐겨찾기 하트 (카드·패널 공통) ──────────────── */
+.top-right{display:flex;align-items:center;gap:8px}
+.fav-btn{
+  border:none;background:none;cursor:pointer;
+  font-size:21px;line-height:1;padding:0;
+  color:var(--ink-soft);opacity:.7;
+  transition:transform .15s ease, color .15s, opacity .15s;
+}
+.fav-btn:hover{transform:scale(1.18);opacity:1;color:var(--vermillion)}
+.fav-btn.on{color:var(--vermillion);opacity:1}
+.filter-toggle.fav input{accent-color:var(--vermillion)}
+
+/* ── 뷰 전환 탭 (목록 / 지도) ─────────────────────── */
+.view-tabs{
+  display:inline-flex;gap:4px;padding:4px;align-self:flex-start;
+  background:var(--ivory-deep);border:1px solid var(--line);border-radius:999px;
+}
+.view-tab{
+  font-family:inherit;font-size:13.5px;font-weight:700;
+  padding:8px 18px;border:none;border-radius:999px;cursor:pointer;
+  background:none;color:var(--ink-soft);transition:all .18s ease;
+}
+.view-tab:hover{color:var(--azulejo)}
+.view-tab.active{background:var(--azulejo);color:var(--ivory);box-shadow:0 3px 10px rgba(23,57,92,.25)}
+
+/* ── 지도 뷰 (왼쪽 정보 패널 + 오른쪽 지도) ──────── */
+.map-view{display:flex;gap:20px;align-items:stretch}
+/* author display 규칙이 UA의 [hidden]{display:none}를 덮으므로 명시적으로 숨김 처리 */
+.grid[hidden], .map-view[hidden]{display:none}
+.map-panel{
+  flex:0 0 340px;max-width:340px;position:relative;
+  background:var(--card);border:1px solid var(--line);border-radius:16px;
+  box-shadow:var(--shadow);padding:22px;
+  max-height:72vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
+}
+.map-canvas{
+  flex:1 1 auto;height:72vh;min-height:420px;z-index:1;
+  border:1px solid var(--line);border-radius:16px;overflow:hidden;
+  box-shadow:var(--shadow);
+}
+.leaflet-container{font-family:inherit}
+.panel-hint{color:var(--ink-soft);font-size:14px;text-align:center;padding:44px 10px;line-height:1.75}
+.panel-close{
+  display:none;position:absolute;top:12px;right:12px;z-index:2;
+  width:34px;height:34px;border-radius:50%;border:1px solid var(--line);
+  background:var(--card);color:var(--ink);font-size:15px;cursor:pointer;
+  align-items:center;justify-content:center;
+}
+.panel-card{--cat-color:var(--azulejo)}
+.panel-card h3{
+  font-family:'Gowun Batang',serif;font-size:22px;font-weight:700;line-height:1.3;
+  margin:12px 0 2px;color:var(--ink);
+}
+.panel-card .badge-group{margin-bottom:2px}
+.panel-card .card-foot{margin-top:16px}
+
+/* ── 지도 핀 (divIcon) ───────────────────────────── */
+.pin{
+  width:18px;height:18px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);
+  background:var(--pin,#17395C);border:2px solid #fff;
+  box-shadow:0 2px 5px rgba(0,0,0,.35);
+}
+.pin.fav{
+  width:22px;height:22px;
+  box-shadow:0 0 0 3px rgba(196,80,43,.28),0 2px 6px rgba(0,0,0,.4);
+}
+
 /* ── footer ──────────────────────────────────────── */
 footer{
   border-top:1px solid var(--line);
@@ -365,6 +435,17 @@ footer .foot-title{font-family:'Gowun Batang',serif;font-size:15px;color:var(--a
     padding-bottom:2px;
   }
   #search{font-size:16px}  /* iOS 확대(zoom) 방지 */
+  /* 모바일 지도: 지도 전체폭 + 정보 패널은 하단 시트(핀 선택 시 등장) */
+  .map-view{flex-direction:column;gap:0}
+  .map-canvas{height:64vh;min-height:340px;border-radius:14px}
+  .map-panel{
+    position:fixed;left:0;right:0;bottom:0;z-index:1200;
+    flex:none;max-width:none;max-height:72vh;
+    border-radius:18px 18px 0 0;box-shadow:0 -8px 30px rgba(23,57,92,.22);
+    transform:translateY(110%);transition:transform .28s ease;
+  }
+  .map-panel.open{transform:none}
+  .panel-close{display:inline-flex}
 }
 </style>
 </head>
@@ -387,6 +468,10 @@ footer .foot-title{font-family:'Gowun Batang',serif;font-size:15px;color:var(--a
 
 <div class="filters">
   <div class="filters-inner">
+    <div class="view-tabs" id="view-tabs">
+      <button class="view-tab active" data-view="list" type="button">📋 목록</button>
+      <button class="view-tab" data-view="map" type="button">🗺️ 지도</button>
+    </div>
     <div class="filters-row">
       <div class="search-wrap">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -420,6 +505,7 @@ footer .foot-title{font-family:'Gowun Batang',serif;font-size:15px;color:var(--a
     <div class="filters-row">
       <span class="count-line"><b id="count">0</b>곳의 맛집</span>
       <div class="right-tools">
+        <label class="filter-toggle fav"><input type="checkbox" id="fav-only"> ♥ 즐겨찾기만</label>
         <label class="filter-toggle classic"><input type="checkbox" id="classic-only"> 🏛️ 노포·명소만</label>
         <label class="filter-toggle michelin"><input type="checkbox" id="michelin-only"> ⭐ 미슐랭만</label>
         <label class="filter-toggle breakfast"><input type="checkbox" id="breakfast-only"> 🌅 아침가능만</label>
@@ -432,6 +518,12 @@ footer .foot-title{font-family:'Gowun Batang',serif;font-size:15px;color:var(--a
 
 <main>
   <div class="grid" id="grid"></div>
+  <div class="map-view" id="map-view" hidden>
+    <aside class="map-panel" id="map-panel">
+      <div class="panel-hint">🗺️ 핀을 선택하면<br>식당 정보가 여기에 표시됩니다.</div>
+    </aside>
+    <div class="map-canvas" id="map"></div>
+  </div>
 </main>
 
 <footer>
@@ -440,6 +532,8 @@ footer .foot-title{font-family:'Gowun Batang',serif;font-size:15px;color:var(--a
   가격은 <b>1인 기준</b> 원화 환산 근사치입니다 — <b>저녁</b>은 구글 가격대·리서치 기준, <b>점심</b>은 런치 세트 기준입니다. 별점·리뷰 수는 조사 시점(2026년 7월) 구글 지도 기준이며, 방문 전 최신 정보 확인을 권장합니다.</p>
 </footer>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script>
 /* ══════════════ DATA ══════════════ */
 const DATA = /*__DATA__*/[];
@@ -478,8 +572,25 @@ const CAT_COLORS = {
 };
 const catColor = c => CAT_COLORS[c] || "#17395C";
 
+/* ══════════════ 즐겨찾기 (localStorage, 기기별) ══════════════ */
+const FAV_KEY = "macau_favs";
+let favs = (()=>{ try{ return new Set(JSON.parse(localStorage.getItem(FAV_KEY) || "[]")); }catch(e){ return new Set(); } })();
+const favKey = d => d.id || d.name_en;
+const isFav  = d => favs.has(favKey(d));
+function toggleFav(key){
+  favs.has(key) ? favs.delete(key) : favs.add(key);
+  try{ localStorage.setItem(FAV_KEY, JSON.stringify([...favs])); }catch(e){}
+}
+function refreshFavUI(){                       // 화면에 있는 모든 하트 버튼 상태 동기화
+  document.querySelectorAll(".fav-btn").forEach(b=>{
+    const on = favs.has(b.dataset.key);
+    b.classList.toggle("on", on);
+    b.textContent = on ? "♥" : "♡";
+  });
+}
+
 /* ══════════════ STATE ══════════════ */
-let state = { q:"", cats:[], loc:"", price:"", sort:"rating", onlyClassic:false, onlyMichelin:false, onlyBreakfast:false };
+let state = { q:"", cats:[], loc:"", price:"", sort:"rating", onlyClassic:false, onlyMichelin:false, onlyBreakfast:false, onlyFavorites:false, view:"list" };
 
 /* ══════════════ BUILD CHIPS ══════════════ */
 function buildChips(){
@@ -540,9 +651,10 @@ function hoursHtml(d){
   }).join("");
   return `<details class="hours"><summary>🕒 영업시간</summary><div class="hours-list">${rows}</div></details>`;
 }
-function render(){
-  const grid = document.getElementById("grid");
-  let rows = DATA.filter(d=>{
+/* 목록·지도가 공유하는 필터(정렬 제외). state의 모든 조건을 한 곳에서 적용. */
+function getFilteredRows(){
+  return DATA.filter(d=>{
+    if(state.onlyFavorites && !isFav(d)) return false;
     if(state.onlyClassic && !d.classic) return false;
     if(state.onlyMichelin && !d.michelin) return false;
     if(state.onlyBreakfast && d.breakfast !== "가능") return false;
@@ -555,20 +667,10 @@ function render(){
     }
     return true;
   });
-  rows.sort((a,b)=>{
-    if(state.sort==="rating") return b.rating - a.rating || b.reviews - a.reviews;
-    if(state.sort==="reviews") return b.reviews - a.reviews;
-    return a.name_ko.localeCompare(b.name_ko,"ko");
-  });
-  document.getElementById("count").textContent = rows.length;
-  updateFilterBadge();
-
-  if(!rows.length){
-    grid.innerHTML = `<div class="empty"><div class="big">검색 결과가 없어요</div>조건을 바꾸거나 필터를 초기화해 보세요.</div>`;
-    return;
-  }
-  grid.innerHTML = rows.map((d,i)=>`
-    <article class="card${d.classic ? ' is-classic' : ''}" style="--cat-color:${catColor(d.category)};animation-delay:${Math.min(i*40,400)}ms">
+}
+/* 카드/패널 공통 내부 마크업. 하트 버튼은 data-key로 즐겨찾기 토글(문서 위임). */
+function cardBody(d){
+  return `
       <div class="card-top">
         <div class="badge-group">
           <span class="cat-badge">${d.category}</span>
@@ -576,7 +678,10 @@ function render(){
           ${d.michelin ? `<span class="michelin-badge">⭐ 미쉐린 ${d.michelin}</span>` : ''}
           ${d.breakfast === "가능" ? `<span class="bf-badge">🌅 아침</span>` : ''}
         </div>
-        <span class="loc-badge">📍 ${d.location}</span>
+        <div class="top-right">
+          <span class="loc-badge">📍 ${d.location}</span>
+          <button class="fav-btn ${isFav(d)?'on':''}" data-key="${favKey(d)}" type="button" aria-label="즐겨찾기" title="즐겨찾기">${isFav(d)?'♥':'♡'}</button>
+        </div>
       </div>
       <h3>${d.name_ko}</h3>
       <div class="name-en">${d.name_en}</div>
@@ -598,16 +703,88 @@ function render(){
           지도 보기
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg>
         </a>
-      </div>
+      </div>`;
+}
+function render(){
+  const grid = document.getElementById("grid");
+  let rows = getFilteredRows();
+  rows.sort((a,b)=>{
+    if(state.sort==="rating") return b.rating - a.rating || b.reviews - a.reviews;
+    if(state.sort==="reviews") return b.reviews - a.reviews;
+    return a.name_ko.localeCompare(b.name_ko,"ko");
+  });
+  document.getElementById("count").textContent = rows.length;
+  updateFilterBadge();
+
+  if(!rows.length){
+    grid.innerHTML = `<div class="empty"><div class="big">검색 결과가 없어요</div>조건을 바꾸거나 필터를 초기화해 보세요.</div>`;
+    return;
+  }
+  grid.innerHTML = rows.map((d,i)=>`
+    <article class="card${d.classic ? ' is-classic' : ''}" style="--cat-color:${catColor(d.category)};animation-delay:${Math.min(i*40,400)}ms">${cardBody(d)}
     </article>
   `).join("");
+}
+
+/* ══════════════ 지도 (Leaflet + markercluster) ══════════════ */
+let map, cluster, panelSelKey = null;
+function pinIcon(fav, color){
+  return L.divIcon({
+    className: "",
+    html: `<div class="pin${fav ? ' fav' : ''}" style="--pin:${fav ? 'var(--vermillion)' : color}"></div>`,
+    iconSize: [18,18], iconAnchor: [9,18], tooltipAnchor: [0,-14]
+  });
+}
+function ensureMap(){
+  if(map) return;
+  map = L.map("map", {scrollWheelZoom:true}).setView([22.17,113.55], 12);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    {maxZoom:19, attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(map);
+  cluster = L.markerClusterGroup({maxClusterRadius:45});
+  map.addLayer(cluster);
+}
+function syncMap(){
+  ensureMap();
+  cluster.clearLayers();
+  const rows = getFilteredRows().filter(d=>d.lat != null && d.lng != null);
+  cluster.addLayers(rows.map(d=>{
+    const m = L.marker([d.lat, d.lng], {icon: pinIcon(isFav(d), catColor(d.category))});
+    m.bindTooltip(d.name_ko, {direction:"top"});
+    m.on("click", ()=>showPanel(d));
+    return m;
+  }));
+}
+function showPanel(d){
+  panelSelKey = favKey(d);
+  const panel = document.getElementById("map-panel");
+  panel.innerHTML = `<button class="panel-close" type="button" aria-label="닫기">✕</button>`
+    + `<div class="panel-card" style="--cat-color:${catColor(d.category)}">${cardBody(d)}</div>`;
+  panel.classList.add("open");
+}
+function closePanel(){
+  const panel = document.getElementById("map-panel");
+  panel.classList.remove("open");
+}
+
+/* ══════════════ 뷰 전환 (목록 / 지도) ══════════════ */
+function setView(v){
+  state.view = v;
+  document.querySelectorAll(".view-tab").forEach(t=>t.classList.toggle("active", t.dataset.view===v));
+  document.getElementById("grid").hidden = (v !== "list");
+  document.getElementById("map-view").hidden = (v !== "map");
+  if(v === "map"){ syncMap(); map.invalidateSize(); }   // 표시된 뒤 크기 재계산(Leaflet 필수)
+}
+/* 필터/정렬 변경 시: 목록은 항상 갱신, 지도 뷰면 핀도 갱신. */
+function update(){
+  render();
+  if(state.view === "map") syncMap();
 }
 
 /* ══════════════ 모바일 필터 접기 ══════════════ */
 /* 적용된 필터 개수(검색어 제외)를 '필터' 버튼 배지에 표시 — 접혀 있어도 필터 상태를 알 수 있게. */
 function updateFilterBadge(){
   const n = state.cats.length + (state.loc?1:0) + (state.price?1:0)
-          + (state.onlyClassic?1:0) + (state.onlyMichelin?1:0) + (state.onlyBreakfast?1:0);
+          + (state.onlyFavorites?1:0) + (state.onlyClassic?1:0) + (state.onlyMichelin?1:0) + (state.onlyBreakfast?1:0);
   const badge = document.getElementById("filter-badge");
   badge.textContent = n > 0 ? n : "";
   badge.classList.toggle("show", n > 0);
@@ -619,12 +796,30 @@ document.getElementById("filter-toggle").addEventListener("click", ()=>{
 });
 
 /* ══════════════ EVENTS ══════════════ */
-document.getElementById("search").addEventListener("input", e=>{ state.q = e.target.value.trim(); render(); });
-document.getElementById("price-filter").addEventListener("change", e=>{ state.price = e.target.value; render(); });
-document.getElementById("sort").addEventListener("change", e=>{ state.sort = e.target.value; render(); });
-document.getElementById("classic-only").addEventListener("change", e=>{ state.onlyClassic = e.target.checked; render(); });
-document.getElementById("michelin-only").addEventListener("change", e=>{ state.onlyMichelin = e.target.checked; render(); });
-document.getElementById("breakfast-only").addEventListener("change", e=>{ state.onlyBreakfast = e.target.checked; render(); });
+document.getElementById("search").addEventListener("input", e=>{ state.q = e.target.value.trim(); update(); });
+document.getElementById("price-filter").addEventListener("change", e=>{ state.price = e.target.value; update(); });
+document.getElementById("sort").addEventListener("change", e=>{ state.sort = e.target.value; update(); });
+document.getElementById("fav-only").addEventListener("change", e=>{ state.onlyFavorites = e.target.checked; update(); });
+document.getElementById("classic-only").addEventListener("change", e=>{ state.onlyClassic = e.target.checked; update(); });
+document.getElementById("michelin-only").addEventListener("change", e=>{ state.onlyMichelin = e.target.checked; update(); });
+document.getElementById("breakfast-only").addEventListener("change", e=>{ state.onlyBreakfast = e.target.checked; update(); });
+/* 뷰 전환 탭 */
+document.getElementById("view-tabs").addEventListener("click", e=>{
+  const t = e.target.closest(".view-tab"); if(!t) return;
+  setView(t.dataset.view);
+});
+/* 즐겨찾기 하트: 카드·패널 어디서 눌러도 동작(문서 위임) */
+document.addEventListener("click", e=>{
+  const b = e.target.closest(".fav-btn"); if(!b) return;
+  toggleFav(b.dataset.key);
+  refreshFavUI();
+  if(state.onlyFavorites) render();     // 즐겨찾기만 필터 켜져 있으면 목록에서 즉시 반영
+  if(state.view === "map") syncMap();   // 지도 핀 강조/필터 갱신
+});
+/* 지도 패널 닫기(모바일 하단 시트) */
+document.getElementById("map-panel").addEventListener("click", e=>{
+  if(e.target.closest(".panel-close")) closePanel();
+});
 document.getElementById("cat-chips").addEventListener("click", e=>{
   const b = e.target.closest(".chip"); if(!b) return;
   const cat = b.dataset.cat;
@@ -639,23 +834,25 @@ document.getElementById("cat-chips").addEventListener("click", e=>{
     const cc = c.dataset.cat;
     c.classList.toggle("active", cc === "" ? state.cats.length === 0 : state.cats.includes(cc));
   });
-  render();
+  update();
 });
 document.getElementById("loc-chips").addEventListener("click", e=>{
   const b = e.target.closest(".chip"); if(!b) return;
   document.querySelectorAll("#loc-chips .chip").forEach(c=>c.classList.remove("active"));
-  b.classList.add("active"); state.loc = b.dataset.loc; render();
+  b.classList.add("active"); state.loc = b.dataset.loc; update();
 });
 document.getElementById("reset").addEventListener("click", ()=>{
-  state = { q:"", cats:[], loc:"", price:"", sort:"rating", onlyClassic:false, onlyMichelin:false, onlyBreakfast:false };
+  const v = state.view;   // 뷰(목록/지도)는 유지, 필터만 초기화
+  state = { q:"", cats:[], loc:"", price:"", sort:"rating", onlyClassic:false, onlyMichelin:false, onlyBreakfast:false, onlyFavorites:false, view:v };
   document.getElementById("search").value = "";
   document.getElementById("price-filter").value = "";
   document.getElementById("sort").value = "rating";
+  document.getElementById("fav-only").checked = false;
   document.getElementById("classic-only").checked = false;
   document.getElementById("michelin-only").checked = false;
   document.getElementById("breakfast-only").checked = false;
   document.querySelectorAll(".chip").forEach(c=>c.classList.toggle("active", c.dataset.cat==="" || c.dataset.loc===""));
-  render();
+  update();
 });
 
 buildChips();

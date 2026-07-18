@@ -112,6 +112,9 @@ def _to_card(r: dict) -> dict:
         "classic": (r.get("place_id") or "") in _CLASSIC_PLACE_IDS,  # 🏛️ 노포·명소 큐레이션
         "hours": (r.get("운영시간") or "").strip(),            # 요일별 영업시간(줄바꿈 구분)
         "breakfast": (r.get("아침가능") or "").strip(),         # '가능' / '불가' / ''
+        "id": (r.get("place_id") or "").strip(),               # 즐겨찾기/지도 핀의 안정적 키
+        "lat": r.get("위도"),                                  # 위도 (지도 핀)
+        "lng": r.get("경도"),                                  # 경도 (지도 핀)
     }
 
 
