@@ -173,6 +173,23 @@ select:focus{outline:none;border-color:var(--azulejo)}
 .filter-toggle.michelin input{accent-color:var(--vermillion)}
 .filter-toggle.breakfast input{accent-color:#F7B733}
 .filter-toggle:has(input:checked){color:var(--azulejo);font-weight:700}
+/* ── 모바일 필터 접기 버튼 (데스크톱에선 숨김) ───────── */
+.filter-btn{
+  display:none;align-items:center;gap:7px;
+  font-family:inherit;font-size:13.5px;font-weight:700;
+  padding:10px 18px;border-radius:999px;cursor:pointer;
+  border:1.5px solid var(--azulejo);
+  background:var(--azulejo);color:var(--ivory);white-space:nowrap;
+}
+.filter-btn .filter-badge{display:none}
+.filter-btn .filter-badge.show{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:19px;height:19px;padding:0 5px;border-radius:999px;
+  background:var(--mustard);color:var(--azulejo);font-size:11px;font-weight:800;
+}
+.filter-btn .filter-caret{font-size:11px;transition:transform .2s}
+.filters.expanded .filter-btn .filter-caret{transform:rotate(180deg)}
+.filters-collapse{display:contents}  /* 데스크톱: 레이아웃에 영향 없음 */
 
 /* ── grid & cards ────────────────────────────────── */
 main{max-width:1180px;margin:0 auto;padding:34px 28px 60px}
@@ -339,6 +356,15 @@ footer .foot-title{font-family:'Gowun Batang',serif;font-size:15px;color:var(--a
   .filters-inner{padding:12px 16px}
   main{padding:24px 16px 48px}
   .grid{grid-template-columns:1fr}
+  /* 모바일: 검색+드롭다운+'필터'버튼만 고정, 나머지는 접기 */
+  .filter-btn{display:inline-flex}
+  .filters-collapse{display:none}
+  .filters.expanded .filters-collapse{
+    display:flex;flex-direction:column;gap:12px;
+    max-height:58vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
+    padding-bottom:2px;
+  }
+  #search{font-size:16px}  /* iOS 확대(zoom) 방지 */
 }
 </style>
 </head>
@@ -378,7 +404,11 @@ footer .foot-title{font-family:'Gowun Batang',serif;font-size:15px;color:var(--a
         <option value="reviews">리뷰 많은순</option>
         <option value="name">이름순</option>
       </select>
+      <button class="filter-btn" id="filter-toggle" type="button" aria-expanded="false" aria-controls="filters-collapse">
+        <span>필터</span><span class="filter-badge" id="filter-badge"></span><span class="filter-caret">▾</span>
+      </button>
     </div>
+    <div class="filters-collapse" id="filters-collapse">
     <div class="filters-row chip-group" id="cat-chips">
       <span class="chip-label">종류</span>
       <button class="chip active" data-cat="">전체</button>
@@ -395,6 +425,7 @@ footer .foot-title{font-family:'Gowun Batang',serif;font-size:15px;color:var(--a
         <label class="filter-toggle breakfast"><input type="checkbox" id="breakfast-only"> 🌅 아침가능만</label>
         <button class="reset-btn" id="reset">필터 초기화</button>
       </div>
+    </div>
     </div>
   </div>
 </div>
@@ -530,6 +561,7 @@ function render(){
     return a.name_ko.localeCompare(b.name_ko,"ko");
   });
   document.getElementById("count").textContent = rows.length;
+  updateFilterBadge();
 
   if(!rows.length){
     grid.innerHTML = `<div class="empty"><div class="big">검색 결과가 없어요</div>조건을 바꾸거나 필터를 초기화해 보세요.</div>`;
@@ -570,6 +602,21 @@ function render(){
     </article>
   `).join("");
 }
+
+/* ══════════════ 모바일 필터 접기 ══════════════ */
+/* 적용된 필터 개수(검색어 제외)를 '필터' 버튼 배지에 표시 — 접혀 있어도 필터 상태를 알 수 있게. */
+function updateFilterBadge(){
+  const n = state.cats.length + (state.loc?1:0) + (state.price?1:0)
+          + (state.onlyClassic?1:0) + (state.onlyMichelin?1:0) + (state.onlyBreakfast?1:0);
+  const badge = document.getElementById("filter-badge");
+  badge.textContent = n > 0 ? n : "";
+  badge.classList.toggle("show", n > 0);
+}
+document.getElementById("filter-toggle").addEventListener("click", ()=>{
+  const filters = document.querySelector(".filters");
+  const open = filters.classList.toggle("expanded");
+  document.getElementById("filter-toggle").setAttribute("aria-expanded", open);
+});
 
 /* ══════════════ EVENTS ══════════════ */
 document.getElementById("search").addEventListener("input", e=>{ state.q = e.target.value.trim(); render(); });
