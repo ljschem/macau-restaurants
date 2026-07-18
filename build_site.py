@@ -110,6 +110,8 @@ def _to_card(r: dict) -> dict:
         "michelin": _michelin_short(r.get("미쉐린") or ""),   # 폴리시2: 별도 미쉐린 뱃지
         "map": (r.get("지도") or "").strip(),                  # 폴리시3: 실제 지도 링크
         "classic": (r.get("place_id") or "") in _CLASSIC_PLACE_IDS,  # 🏛️ 노포·명소 큐레이션
+        "hours": (r.get("운영시간") or "").strip(),            # 요일별 영업시간(줄바꿈 구분)
+        "breakfast": (r.get("아침가능") or "").strip(),         # '가능' / '불가' / ''
     }
 
 
@@ -141,9 +143,12 @@ def main() -> None:
     with_price = sum(1 for c in cards if c["price"])
     with_lunch = sum(1 for c in cards if c["price_lunch"])
     with_classic = sum(1 for c in cards if c["classic"])
+    with_breakfast = sum(1 for c in cards if c["breakfast"] == "가능")
+    with_hours = sum(1 for c in cards if c["hours"])
     print(f"Wrote {OUTPUT} - {len(cards)} restaurants "
           f"({with_michelin} michelin, {with_classic} classic, "
-          f"{with_price} with dinner price, {with_lunch} with lunch price).")
+          f"{with_price} with dinner price, {with_lunch} with lunch price, "
+          f"{with_breakfast} breakfast-ok, {with_hours} with hours).")
     if with_classic != len(_CLASSIC_PLACE_IDS):
         print(f"  WARNING: {len(_CLASSIC_PLACE_IDS)} classic place_ids configured "
               f"but only {with_classic} matched in the dataset.")
