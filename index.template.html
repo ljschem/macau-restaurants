@@ -242,6 +242,24 @@ main{max-width:1180px;margin:0 auto;padding:34px 28px 60px}
   margin-left:auto;font-size:12.5px;font-weight:600;color:var(--vermillion);
 }
 .price-tag .sym{letter-spacing:1px;font-weight:800}
+/* ── price block (점심 / 저녁 · 단일) ─────────────── */
+.price-block{
+  display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;
+}
+.price-item{
+  display:inline-flex;align-items:center;gap:7px;
+  font-size:13px;font-weight:700;color:var(--vermillion);
+  background:var(--ivory-deep);
+  border:1px solid var(--line);border-radius:10px;
+  padding:6px 12px;
+}
+.price-item .price-lbl{
+  font-size:10.5px;font-weight:800;letter-spacing:.06em;
+  color:#fff;padding:2px 8px;border-radius:6px;
+}
+.price-item.lunch .price-lbl{background:var(--mustard);color:#5E4310}
+.price-item.dinner .price-lbl{background:var(--azulejo)}
+.price-item.single{color:var(--vermillion)}
 .menu-line{
   margin-top:12px;padding:11px 14px;
   background:var(--ivory-deep);
@@ -358,7 +376,7 @@ footer .foot-title{font-family:'Gowun Batang',serif;font-size:15px;color:var(--a
 <footer>
   <div class="foot-title">마카오 미식 가이드</div>
   <p>구글 평점 4.0 이상 · 리뷰 100개 이상의 마카오 식당을 모았습니다. ⭐ 미쉐린 표시는 미쉐린 가이드 등재 식당입니다.<br>
-  가격은 2인 기준 원화 환산 근사치이며, 별점·리뷰 수는 조사 시점(2026년 7월) 구글 지도 기준입니다. 방문 전 최신 정보 확인을 권장합니다.</p>
+  가격은 <b>1인 기준</b> 원화 환산 근사치입니다 — <b>저녁</b>은 구글 가격대·리서치 기준, <b>점심</b>은 런치 세트 기준입니다. 별점·리뷰 수는 조사 시점(2026년 7월) 구글 지도 기준이며, 방문 전 최신 정보 확인을 권장합니다.</p>
 </footer>
 
 <script>
@@ -430,7 +448,26 @@ function starStr(r){
 function fmtReviews(n){
   return n >= 1000 ? (n/1000).toFixed(n%1000===0?0:1) + "k" : String(n);
 }
-/* 가격은 DB(macau.db)에서 이미 2인 기준 원화 문자열로 계산되어 들어온다(예: "55,000~73,300원"). */
+/* 가격 블록: 점심가(1인 세트)와 저녁/일반가(2인)를 카드에 함께 노출한다.
+   - 둘 다 있으면 '점심'/'저녁' 라벨을 붙여 두 칸으로,
+   - 저녁(일반)만 있으면 라벨 없는 단일 가격으로,
+   - 점심만 있으면 '점심' 한 칸으로 표시한다. (요청: 인원 표기는 생략) */
+function priceBlock(d){
+  const lunch = d.price_lunch || "";
+  const dinner = d.price || "";
+  let items = "";
+  if(lunch && dinner){
+    items = `<span class="price-item lunch"><span class="price-lbl">점심</span>${lunch}</span>`
+          + `<span class="price-item dinner"><span class="price-lbl">저녁</span>${dinner}</span>`;
+  } else if(lunch){
+    items = `<span class="price-item lunch"><span class="price-lbl">점심</span>${lunch}</span>`;
+  } else if(dinner){
+    items = `<span class="price-item single">${dinner}</span>`;
+  } else {
+    return "";
+  }
+  return `<div class="price-block">${items}</div>`;
+}
 function render(){
   const grid = document.getElementById("grid");
   let rows = DATA.filter(d=>{
@@ -470,8 +507,9 @@ function render(){
         <span class="stars">${starStr(d.rating)}</span>
         <span class="rating-num">${d.rating.toFixed(1)}</span>
         <span class="reviews">리뷰 ${fmtReviews(d.reviews)}+</span>
-        <span class="price-tag"><span class="sym">${d.priceSym||''}</span> ${d.price||''}</span>
+        ${d.priceSym && d.priceSym[0]==='$' ? `<span class="price-tag"><span class="sym">${d.priceSym}</span></span>` : ''}
       </div>
+      ${priceBlock(d)}
       <div class="menu-line"><b>대표 메뉴</b>${d.menu.join(" · ")}</div>
       <div class="pros-line">${d.pros}</div>
       <p class="intro-line">${d.intro}</p>

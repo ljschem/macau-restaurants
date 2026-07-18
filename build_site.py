@@ -15,6 +15,7 @@ No Google API key is needed: _build_rows only reads the DB (+ cached FX rates).
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -42,6 +43,23 @@ def _menu_list(raw: str) -> list[str]:
     return [m.strip() for m in raw.split(" · ") if m.strip()]
 
 
+def _clean_price(raw: str) -> str:
+    """Normalize a researched lunch price into a clean display string.
+
+    Source values are inconsistent: '24864', '16,464원 (1인 기준)', '13,440~20,160원',
+    '약 87,500원 (MOP 480 기준)'. Strip any parenthetical qualifier and, when the value is
+    bare digits (no '원'), insert thousands separators and append 원.
+    """
+    if not raw:
+        return ""
+    s = re.sub(r"\s*\([^)]*\)", "", str(raw)).strip()
+    if not s:
+        return ""
+    if "원" not in s:
+        s = re.sub(r"\d+", lambda m: f"{int(m.group()):,}", s) + "원"
+    return s
+
+
 def _michelin_short(raw: str) -> str:
     """'3스타 (2026)' -> '3스타' for a compact badge; '' when no Michelin listing."""
     if not raw:
@@ -63,7 +81,8 @@ def _to_card(r: dict) -> dict:
         "name_ko": (r.get("이름(한글)") or r.get("상호") or "").strip(),
         "name_en": (r.get("상호") or "").strip(),
         "category": (r.get("카테고리(요리)") or "기타").strip(),
-        "price": (r.get("가격(2인기준,원화)") or "").strip(),
+        "price": _clean_price(r.get("가격(1인기준,원화)") or ""),          # 저녁/일반 (1인 기준)
+        "price_lunch": _clean_price(r.get("런치가격(1인기준,원화)") or ""),  # 점심 (1인 세트 기준)
         "priceSym": (r.get("가격기호") or "").strip(),
         "rating": rating,
         "reviews": reviews,
@@ -103,8 +122,10 @@ def main() -> None:
 
     with_michelin = sum(1 for c in cards if c["michelin"])
     with_price = sum(1 for c in cards if c["price"])
+    with_lunch = sum(1 for c in cards if c["price_lunch"])
     print(f"Wrote {OUTPUT} - {len(cards)} restaurants "
-          f"({with_michelin} michelin, {with_price} with price).")
+          f"({with_michelin} michelin, {with_price} with dinner price, "
+          f"{with_lunch} with lunch price).")
 
 
 if __name__ == "__main__":
