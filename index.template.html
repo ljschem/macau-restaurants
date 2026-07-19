@@ -369,6 +369,19 @@ main{max-width:1180px;margin:0 auto;padding:34px 28px 60px}
 /* 관리자 전용: 비관리자에게는 즐겨찾기 UI를 숨김 (제목 5번 클릭+비밀번호로 해제) */
 body:not(.admin) .fav-btn,
 body:not(.admin) .filter-toggle.fav{display:none !important}
+/* 관리자 전용 '즐겨찾기 저장' 플로팅 버튼 (공유 즐겨찾기를 저장소에 커밋) */
+#fav-save{
+  position:fixed;right:18px;bottom:18px;z-index:1300;
+  font-family:inherit;font-size:13.5px;font-weight:700;
+  padding:11px 18px;border-radius:999px;border:1px solid var(--line);
+  background:var(--card);color:var(--ink-soft);cursor:pointer;
+  box-shadow:0 6px 20px rgba(23,57,92,.18);
+  transition:transform .15s ease, background .15s, color .15s;
+}
+#fav-save:hover{transform:translateY(-2px)}
+#fav-save.dirty{background:var(--vermillion);color:#fff;border-color:var(--vermillion)}
+#fav-save:disabled{opacity:.6;cursor:default;transform:none}
+body:not(.admin) #fav-save{display:none !important}
 
 /* ── 뷰 전환 탭 (목록 / 지도) ─────────────────────── */
 .view-tabs{
@@ -545,6 +558,8 @@ footer .foot-title{font-family:'Gowun Batang',serif;font-size:15px;color:var(--a
   가격은 <b>1인 기준</b> 원화 환산 근사치입니다 — <b>저녁</b>은 구글 가격대·리서치 기준, <b>점심</b>은 런치 세트 기준입니다. 별점·리뷰 수는 조사 시점(2026년 7월) 구글 지도 기준이며, 방문 전 최신 정보 확인을 권장합니다.</p>
 </footer>
 
+<button id="fav-save" type="button" title="공유 즐겨찾기를 저장소에 저장">저장됨 ✓</button>
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script>
@@ -599,33 +614,93 @@ function enterAdmin(){
   if(_h(pw) === ADMIN_HASH){
     isAdmin = true;
     localStorage.setItem(ADMIN_KEY, String(ADMIN_HASH));
-    applyAdmin(); update(); refreshFavUI();
+    applyAdmin(); update(); refreshFavUI(); updateFavSaveUI();
+    loadFavs();                                 // 저장소의 공유 즐겨찾기 불러오기
   } else {
     alert("비밀번호가 올바르지 않습니다.");
   }
 }
 function exitAdmin(){
+  if(favDirty && !confirm("저장하지 않은 즐겨찾기 변경이 있습니다. 관리자 모드를 종료할까요?")) return;
   isAdmin = false;
   localStorage.removeItem(ADMIN_KEY);
   state.onlyFavorites = false;
   const fo = document.getElementById("fav-only"); if(fo) fo.checked = false;
+  favDirty = false;
   applyAdmin(); update();
 }
 
-/* ══════════════ 즐겨찾기 (localStorage, 기기별 · 관리자 전용) ══════════════ */
-const FAV_KEY = "macau_favs";
-let favs = (()=>{ try{ return new Set(JSON.parse(localStorage.getItem(FAV_KEY) || "[]")); }catch(e){ return new Set(); } })();
+/* ══════════════ 공유 즐겨찾기 (저장소 favorites.json · 관리자 전용) ══════════════ */
+/* 원본은 저장소의 favorites.json(place_id 배열). 모든 관리자가 같은 리스트를 보고,
+   GitHub 토큰으로 '저장'하면 저장소에 커밋되어 공유됩니다. 토큰은 각자 브라우저에만 저장. */
+const GH_OWNER = "ljschem", GH_REPO = "macau-restaurants", GH_BRANCH = "main", FAV_PATH = "favorites.json";
+const TOKEN_KEY = "macau_gh_token";
+let favs = new Set();        // 현재 공유 즐겨찾기(메모리)
+let favDirty = false;        // 저장 안 된 변경 여부
 const favKey = d => d.id || d.name_en;
 const isFav  = d => isAdmin && favs.has(favKey(d));   // 비관리자에겐 즐겨찾기 비활성(핀 강조·필터도 자동 무효)
 function toggleFav(key){
-  if(!isAdmin) return;                                // 관리자만 즐겨찾기 변경 가능
+  if(!isAdmin) return;                                // 관리자만 변경 가능
   favs.has(key) ? favs.delete(key) : favs.add(key);
-  try{ localStorage.setItem(FAV_KEY, JSON.stringify([...favs])); }catch(e){}
+  favDirty = true; updateFavSaveUI();
 }
-function refreshFavUI(){                       // 화면에 있는 모든 북마크 버튼 상태 동기화(SVG 유지)
+function refreshFavUI(){                       // 화면의 모든 북마크 버튼 상태 동기화(SVG 유지)
   document.querySelectorAll(".fav-btn").forEach(b=>{
     b.classList.toggle("on", favs.has(b.dataset.key));
   });
+}
+/* 저장소에서 공유 즐겨찾기 목록 읽기 (공개 파일, 토큰 불필요) */
+async function loadFavs(){
+  try{
+    const res = await fetch(FAV_PATH + "?t=" + Date.now(), {cache:"no-store"});
+    if(res.ok){
+      const arr = await res.json();
+      if(Array.isArray(arr)){ favs = new Set(arr); favDirty = false; update(); refreshFavUI(); }
+    }
+  }catch(e){ /* 파일 없음/오프라인: 무시 */ }
+  updateFavSaveUI();
+}
+/* GitHub 토큰 (이 저장소 Contents 쓰기 권한). 각 관리자 브라우저에만 저장. */
+function ghToken(){ return localStorage.getItem(TOKEN_KEY) || ""; }
+function ensureToken(){
+  let t = ghToken();
+  if(!t){
+    t = prompt("GitHub 토큰을 입력하세요 (이 저장소 Contents 쓰기 권한, 최초 1회).");
+    if(t){ t = t.trim(); localStorage.setItem(TOKEN_KEY, t); }
+  }
+  return t;
+}
+function b64(s){ return btoa(unescape(encodeURIComponent(s))); }
+/* 공유 즐겨찾기를 저장소 favorites.json에 커밋 */
+async function saveFavs(){
+  if(!isAdmin) return;
+  const token = ensureToken();
+  if(!token){ return; }
+  updateFavSaveUI("saving");
+  const api = "https://api.github.com/repos/" + GH_OWNER + "/" + GH_REPO + "/contents/" + FAV_PATH;
+  const headers = { "Authorization":"Bearer "+token, "Accept":"application/vnd.github+json", "Content-Type":"application/json" };
+  try{
+    let sha = null;                              // 최신 sha 조회(업데이트에 필요)
+    const g = await fetch(api + "?ref=" + GH_BRANCH + "&t=" + Date.now(), {headers, cache:"no-store"});
+    if(g.ok){ sha = (await g.json()).sha; }
+    else if(g.status === 401){ localStorage.removeItem(TOKEN_KEY); alert("토큰이 유효하지 않습니다. 다시 시도해 주세요."); updateFavSaveUI(); return; }
+    else if(g.status !== 404){ throw new Error("조회 실패 " + g.status); }
+    const body = { message:"즐겨찾기 업데이트 ("+favs.size+"곳)", content: b64(JSON.stringify([...favs], null, 2) + "\n"), branch: GH_BRANCH };
+    if(sha) body.sha = sha;
+    const p = await fetch(api, { method:"PUT", headers, body: JSON.stringify(body) });
+    if(p.ok){ favDirty = false; updateFavSaveUI("saved"); }
+    else if(p.status === 401){ localStorage.removeItem(TOKEN_KEY); alert("토큰이 유효하지 않습니다. 다시 시도해 주세요."); updateFavSaveUI(); }
+    else if(p.status === 409){ alert("다른 곳에서 먼저 저장됐습니다. 새로고침 후 다시 시도해 주세요."); updateFavSaveUI(); }
+    else { alert("저장 실패: " + p.status + " " + (await p.text()).slice(0,200)); updateFavSaveUI(); }
+  }catch(e){ alert("저장 중 오류: " + e.message); updateFavSaveUI(); }
+}
+/* 관리자 전용 저장 버튼 상태 표시 */
+function updateFavSaveUI(mode){
+  const el = document.getElementById("fav-save"); if(!el) return;
+  if(mode === "saving"){ el.disabled = true; el.textContent = "저장 중…"; el.classList.remove("dirty"); return; }
+  el.disabled = false;
+  el.classList.toggle("dirty", favDirty);
+  el.textContent = favDirty ? ("즐겨찾기 저장 (" + favs.size + ")") : "저장됨 ✓";
 }
 
 /* ══════════════ STATE ══════════════ */
@@ -910,6 +985,9 @@ document.getElementById("reset").addEventListener("click", ()=>{
 buildChips();
 render();
 applyAdmin();
+document.getElementById("fav-save").addEventListener("click", saveFavs);
+updateFavSaveUI();
+if(isAdmin) loadFavs();     // 이미 관리자면 저장소의 공유 즐겨찾기를 불러옴
 </script>
 </body>
 </html>
