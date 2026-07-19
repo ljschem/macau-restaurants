@@ -232,6 +232,12 @@ main{max-width:1180px;margin:0 auto;padding:34px 28px 60px}
   padding:4px 10px;border-radius:999px;white-space:nowrap;
   box-shadow:0 1px 3px rgba(217,164,65,.45);
 }
+.local-badge{
+  font-size:11px;font-weight:800;letter-spacing:.01em;
+  color:#7A2E12;background:linear-gradient(135deg,#F6B98F,#E8743B);
+  padding:4px 10px;border-radius:999px;white-space:nowrap;
+  box-shadow:0 1px 3px rgba(232,116,59,.42);
+}
 .michelin-badge{
   font-size:11px;font-weight:800;letter-spacing:.01em;
   color:#fff;background:linear-gradient(135deg,#C0392B,#7B1E1E);
@@ -676,7 +682,7 @@ function cardBody(d){
       <div class="card-top">
         <div class="badge-group">
           <span class="cat-badge">${d.category}</span>
-          ${d.classic ? `<span class="classic-badge">🏛️ 노포·명소</span>` : ''}
+          ${d.curated_category === "명소" ? `<span class="classic-badge">🏛️ 명소</span>` : d.curated_category === "로컬인기" ? `<span class="local-badge">🔥 로컬인기</span>` : ''}
           ${d.michelin ? `<span class="michelin-badge">⭐ 미쉐린 ${d.michelin}</span>` : ''}
           ${d.breakfast === "가능" ? `<span class="bf-badge">🌅 아침</span>` : ''}
         </div>
