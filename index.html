@@ -366,6 +366,9 @@ main{max-width:1180px;margin:0 auto;padding:34px 28px 60px}
 .fav-btn.on{color:var(--vermillion);opacity:1}
 .fav-btn.on svg{fill:currentColor}   /* 즐겨찾기: 채워진 북마크 */
 .filter-toggle.fav input{accent-color:var(--vermillion)}
+/* 관리자 전용: 비관리자에게는 즐겨찾기 UI를 숨김 (제목 5번 클릭+비밀번호로 해제) */
+body:not(.admin) .fav-btn,
+body:not(.admin) .filter-toggle.fav{display:none !important}
 
 /* ── 뷰 전환 탭 (목록 / 지도) ─────────────────────── */
 .view-tabs{
@@ -582,12 +585,40 @@ const CAT_COLORS = {
 };
 const catColor = c => CAT_COLORS[c] || "#17395C";
 
-/* ══════════════ 즐겨찾기 (localStorage, 기기별) ══════════════ */
+/* ══════════════ 관리자 모드 (즐겨찾기 잠금) ══════════════ */
+/* 정적 사이트라 "약한 잠금"입니다: 평문 대신 해시만 노출하지만 소스를 뜯으면 우회 가능.
+   목적은 일반 방문자가 즐겨찾기를 못 쓰게 + 티 안 나게 하는 것(진짜 보안은 서버 필요). */
+const ADMIN_KEY = "macau_admin";
+const ADMIN_HASH = 2088257997;                 // _h("0521")
+function _h(s){ let h=5381; for(let i=0;i<s.length;i++) h=((h<<5)+h+s.charCodeAt(i))>>>0; return h; }
+let isAdmin = Number(localStorage.getItem(ADMIN_KEY)) === ADMIN_HASH;
+function applyAdmin(){ document.body.classList.toggle("admin", isAdmin); }
+function enterAdmin(){
+  const pw = prompt("비밀번호");
+  if(pw == null) return;
+  if(_h(pw) === ADMIN_HASH){
+    isAdmin = true;
+    localStorage.setItem(ADMIN_KEY, String(ADMIN_HASH));
+    applyAdmin(); update(); refreshFavUI();
+  } else {
+    alert("비밀번호가 올바르지 않습니다.");
+  }
+}
+function exitAdmin(){
+  isAdmin = false;
+  localStorage.removeItem(ADMIN_KEY);
+  state.onlyFavorites = false;
+  const fo = document.getElementById("fav-only"); if(fo) fo.checked = false;
+  applyAdmin(); update();
+}
+
+/* ══════════════ 즐겨찾기 (localStorage, 기기별 · 관리자 전용) ══════════════ */
 const FAV_KEY = "macau_favs";
 let favs = (()=>{ try{ return new Set(JSON.parse(localStorage.getItem(FAV_KEY) || "[]")); }catch(e){ return new Set(); } })();
 const favKey = d => d.id || d.name_en;
-const isFav  = d => favs.has(favKey(d));
+const isFav  = d => isAdmin && favs.has(favKey(d));   // 비관리자에겐 즐겨찾기 비활성(핀 강조·필터도 자동 무효)
 function toggleFav(key){
+  if(!isAdmin) return;                                // 관리자만 즐겨찾기 변경 가능
   favs.has(key) ? favs.delete(key) : favs.add(key);
   try{ localStorage.setItem(FAV_KEY, JSON.stringify([...favs])); }catch(e){}
 }
@@ -863,8 +894,22 @@ document.getElementById("reset").addEventListener("click", ()=>{
   update();
 });
 
+/* 제목(로고) 5번 연속 클릭 → 관리자 진입/해제 (화면에 버튼 없이 티 안 나게) */
+(function(){
+  const title = document.querySelector(".hero h1");
+  if(!title) return;
+  let n = 0, last = 0;
+  title.addEventListener("click", ()=>{
+    const now = Date.now();
+    n = (now - last < 1500) ? n + 1 : 1;
+    last = now;
+    if(n >= 5){ n = 0; isAdmin ? exitAdmin() : enterAdmin(); }
+  });
+})();
+
 buildChips();
 render();
+applyAdmin();
 </script>
 </body>
 </html>
